@@ -9,6 +9,8 @@ services:
   envVars:
   - key: PORT
     value: 10000
+  - key: DB_DRIVER
+    value: sqlite
   - key: ORACLE_USER
     sync: false
   - key: ORACLE_PASSWORD
