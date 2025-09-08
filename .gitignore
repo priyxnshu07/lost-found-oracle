@@ -1,0 +1,5 @@
+node_modules/
+.env
+wallet/
+*.zip
+.DS_Store

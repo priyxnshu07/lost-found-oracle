@@ -1,0 +1,82 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Lost & Found</title>
+    <style>
+      body { font-family: system-ui, -apple-system, sans-serif; margin: 24px; }
+      h2 { margin-top: 32px; }
+      form { display: grid; gap: 8px; max-width: 420px; }
+      input, textarea, select { padding: 8px; }
+      button { padding: 8px 12px; }
+      table { border-collapse: collapse; width: 100%; margin-top: 12px; }
+      th, td { border: 1px solid #ddd; padding: 8px; }
+    </style>
+  </head>
+  <body>
+    <h1>Lost & Found Devices</h1>
+    <p>Submit lost or found items and run auto-match.</p>
+
+    <h2>Report Lost Item</h2>
+    <form id="lostForm">
+      <input name="item_name" placeholder="Item name" required />
+      <input name="category" placeholder="Category" required />
+      <input name="lost_location" placeholder="Lost location" required />
+      <textarea name="description" placeholder="Description"></textarea>
+      <button>Submit Lost</button>
+    </form>
+
+    <h2>Report Found Item</h2>
+    <form id="foundForm">
+      <input name="item_name" placeholder="Item name" required />
+      <input name="category" placeholder="Category" required />
+      <input name="found_location" placeholder="Found location" required />
+      <textarea name="description" placeholder="Description"></textarea>
+      <button>Submit Found</button>
+    </form>
+
+    <h2>Matches</h2>
+    <button id="runMatch">Run AutoMatch</button>
+    <div id="matches"></div>
+
+    <script>
+      const api = (p) => fetch(p).then(r => r.json());
+      const post = (p, body) => fetch(p, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }).then(r => r.json());
+
+      async function refresh() {
+        const [lost, found, matches] = await Promise.all([
+          api('/api/lost'), api('/api/found'), api('/api/matches')
+        ]);
+        document.getElementById('matches').innerHTML = `<table><thead><tr><th>Match</th><th>Lost ID</th><th>Found ID</th><th>Date</th><th>Status</th></tr></thead><tbody>${
+          matches.map(m => `<tr><td>${m[0]}</td><td>${m[1]}</td><td>${m[2]}</td><td>${m[3]}</td><td>${m[4]}</td></tr>`).join('')
+        }</tbody></table>`;
+      }
+
+      document.getElementById('lostForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const data = Object.fromEntries(new FormData(e.target).entries());
+        await post('/api/lost', data);
+        e.target.reset();
+        refresh();
+      });
+
+      document.getElementById('foundForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const data = Object.fromEntries(new FormData(e.target).entries());
+        await post('/api/found', data);
+        e.target.reset();
+        refresh();
+      });
+
+      document.getElementById('runMatch').addEventListener('click', async () => {
+        await post('/api/automatch', {});
+        refresh();
+      });
+
+      refresh();
+    </script>
+  </body>
+  </html>
+
+
