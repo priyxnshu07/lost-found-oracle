@@ -5,38 +5,80 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Lost & Found</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <style> .card{ @apply bg-white rounded-xl shadow p-5 } </style>
+    <style>
+      .card{ @apply bg-white/90 backdrop-blur rounded-xl shadow p-5 border border-gray-100 }
+      .btn{ @apply inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium shadow-sm }
+      .btn-primary{ @apply bg-indigo-600 text-white hover:bg-indigo-700 }
+      .btn-success{ @apply bg-emerald-600 text-white hover:bg-emerald-700 }
+      .btn-danger{ @apply bg-rose-600 text-white hover:bg-rose-700 }
+      .input{ @apply border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 }
+      .label{ @apply text-xs font-medium text-gray-600 }
+    </style>
   </head>
-  <body>
-    <div class="max-w-6xl mx-auto p-6">
-      <header class="mb-6 flex items-center justify-between">
-        <h1 class="text-2xl font-bold">Lost & Found Devices</h1>
-        <div class="flex gap-2">
-          <button id="runMatch" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">Run AutoMatch</button>
-          <button id="resetDb" class="px-4 py-2 bg-rose-600 text-white rounded-lg hover:bg-rose-700">Reset DB</button>
+  <body class="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-emerald-50">
+    <nav class="sticky top-0 z-10 backdrop-blur bg-white/70 border-b border-gray-100">
+      <div class="max-w-6xl mx-auto px-6 py-3 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <div class="h-8 w-8 rounded-lg bg-indigo-600 text-white grid place-items-center font-semibold">LF</div>
+          <span class="font-semibold">Lost & Found</span>
         </div>
+        <div class="flex gap-2">
+          <button id="runMatch" class="btn btn-primary">Run AutoMatch</button>
+          <button id="resetDb" class="btn btn-danger">Reset DB</button>
+        </div>
+      </div>
+    </nav>
+
+    <div class="max-w-6xl mx-auto p-6">
+      <header class="mb-6">
+        <h1 class="text-2xl font-bold">Report and match items</h1>
+        <p class="text-gray-600">Add lost or found items; AutoMatch links likely pairs by name, category and location.</p>
       </header>
 
       <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div class="card">
           <h2 class="text-lg font-semibold mb-2">Report Lost Item</h2>
-          <form id="lostForm" class="grid gap-2">
-            <input class="border rounded p-2" name="item_name" placeholder="Item name" required />
-            <input class="border rounded p-2" name="category" placeholder="Category" required />
-            <input class="border rounded p-2" name="lost_location" placeholder="Lost location" required />
-            <textarea class="border rounded p-2" name="description" placeholder="Description"></textarea>
-            <button class="px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Submit Lost</button>
+          <form id="lostForm" class="grid gap-3">
+            <label class="grid gap-1">
+              <span class="label">Item name</span>
+              <input class="input" name="item_name" placeholder="e.g. AirPods Pro" required />
+            </label>
+            <label class="grid gap-1">
+              <span class="label">Category</span>
+              <input class="input" name="category" placeholder="e.g. earphones" required />
+            </label>
+            <label class="grid gap-1">
+              <span class="label">Lost location</span>
+              <input class="input" name="lost_location" placeholder="e.g. Library" required />
+            </label>
+            <label class="grid gap-1">
+              <span class="label">Description</span>
+              <textarea class="input" name="description" placeholder="color, case, stickers..."></textarea>
+            </label>
+            <button class="btn btn-success">Submit Lost</button>
           </form>
         </div>
 
         <div class="card">
           <h2 class="text-lg font-semibold mb-2">Report Found Item</h2>
-          <form id="foundForm" class="grid gap-2">
-            <input class="border rounded p-2" name="item_name" placeholder="Item name" required />
-            <input class="border rounded p-2" name="category" placeholder="Category" required />
-            <input class="border rounded p-2" name="found_location" placeholder="Found location" required />
-            <textarea class="border rounded p-2" name="description" placeholder="Description"></textarea>
-            <button class="px-3 py-2 bg-emerald-600 text-white rounded hover:bg-emerald-700">Submit Found</button>
+          <form id="foundForm" class="grid gap-3">
+            <label class="grid gap-1">
+              <span class="label">Item name</span>
+              <input class="input" name="item_name" placeholder="e.g. AirPods Pro" required />
+            </label>
+            <label class="grid gap-1">
+              <span class="label">Category</span>
+              <input class="input" name="category" placeholder="e.g. earphones" required />
+            </label>
+            <label class="grid gap-1">
+              <span class="label">Found location</span>
+              <input class="input" name="found_location" placeholder="e.g. Cafeteria" required />
+            </label>
+            <label class="grid gap-1">
+              <span class="label">Description</span>
+              <textarea class="input" name="description" placeholder="where exactly, notes..."></textarea>
+            </label>
+            <button class="btn btn-primary">Submit Found</button>
           </form>
         </div>
 
@@ -45,6 +87,10 @@
           <div id="matches"></div>
         </div>
       </div>
+
+      <footer class="text-center mt-10 text-sm text-gray-500">
+        Built for your DBMS project • Oracle/SQLite compatible • AutoMatch demo
+      </footer>
     </div>
 
     <script>
@@ -61,7 +107,7 @@
           api('/api/lost'), api('/api/found'), api('/api/matches')
         ]);
         const rows = matches.map(m => Array.isArray(m) ? {match_id:m[0],lost_id:m[1],found_id:m[2],match_date:m[3],status:m[4]} : m);
-        document.getElementById('matches').innerHTML = `<table class="w-full text-sm"><thead><tr class="text-left"><th class="p-2">Match</th><th class="p-2">Lost ID</th><th class="p-2">Found ID</th><th class="p-2">Date</th><th class="p-2">Status</th></tr></thead><tbody>${
+        document.getElementById('matches').innerHTML = `<table class="w-full text-sm"><thead><tr class="text-left"><th class="p-2 text-gray-600">Match</th><th class="p-2 text-gray-600">Lost ID</th><th class="p-2 text-gray-600">Found ID</th><th class="p-2 text-gray-600">Date</th><th class="p-2 text-gray-600">Status</th></tr></thead><tbody>${
           rows.map(m => `<tr class="odd:bg-gray-50"><td class="p-2">${m.match_id}</td><td class="p-2">${m.lost_id}</td><td class="p-2">${m.found_id}</td><td class="p-2">${m.match_date ?? ''}</td><td class="p-2">${m.status ?? ''}</td></tr>`).join('')
         }</tbody></table>`;
       }
