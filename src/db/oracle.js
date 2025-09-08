@@ -6,6 +6,11 @@ dotenv.config();
 
 let poolRef = null;
 
+// Return rows as objects with column names for consistent API shapes
+oracledb.outFormat = oracledb.OUT_FORMAT_OBJECT;
+// Improve date handling by returning strings
+oracledb.fetchAsString = [ oracledb.DATE ];
+
 export async function getPool() {
   if (poolRef) return poolRef;
 

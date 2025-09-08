@@ -126,6 +126,29 @@ router.post('/automatch', async (_req, res) => {
   }
 });
 
+// Admin: reset database (development convenience)
+router.post('/admin/reset', async (_req, res) => {
+  try {
+    const result = await db.withConnection(async conn => {
+      if (conn.execute) {
+        await conn.execute(`DELETE FROM MATCHES`);
+        await conn.execute(`DELETE FROM FOUND_ITEMS`);
+        await conn.execute(`DELETE FROM LOST_ITEMS`);
+        await conn.commit();
+        return { ok: true };
+      } else {
+        conn.prepare(`DELETE FROM MATCHES`).run();
+        conn.prepare(`DELETE FROM FOUND_ITEMS`).run();
+        conn.prepare(`DELETE FROM LOST_ITEMS`).run();
+        return { ok: true };
+      }
+    });
+    res.json(result);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 export default router;
 
 

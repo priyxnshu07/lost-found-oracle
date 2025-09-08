@@ -4,74 +4,87 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Lost & Found</title>
-    <style>
-      body { font-family: system-ui, -apple-system, sans-serif; margin: 24px; }
-      h2 { margin-top: 32px; }
-      form { display: grid; gap: 8px; max-width: 420px; }
-      input, textarea, select { padding: 8px; }
-      button { padding: 8px 12px; }
-      table { border-collapse: collapse; width: 100%; margin-top: 12px; }
-      th, td { border: 1px solid #ddd; padding: 8px; }
-    </style>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style> .card{ @apply bg-white rounded-xl shadow p-5 } </style>
   </head>
   <body>
-    <h1>Lost & Found Devices</h1>
-    <p>Submit lost or found items and run auto-match.</p>
+    <div class="max-w-6xl mx-auto p-6">
+      <header class="mb-6 flex items-center justify-between">
+        <h1 class="text-2xl font-bold">Lost & Found Devices</h1>
+        <div class="flex gap-2">
+          <button id="runMatch" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">Run AutoMatch</button>
+          <button id="resetDb" class="px-4 py-2 bg-rose-600 text-white rounded-lg hover:bg-rose-700">Reset DB</button>
+        </div>
+      </header>
 
-    <h2>Report Lost Item</h2>
-    <form id="lostForm">
-      <input name="item_name" placeholder="Item name" required />
-      <input name="category" placeholder="Category" required />
-      <input name="lost_location" placeholder="Lost location" required />
-      <textarea name="description" placeholder="Description"></textarea>
-      <button>Submit Lost</button>
-    </form>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="card">
+          <h2 class="text-lg font-semibold mb-2">Report Lost Item</h2>
+          <form id="lostForm" class="grid gap-2">
+            <input class="border rounded p-2" name="item_name" placeholder="Item name" required />
+            <input class="border rounded p-2" name="category" placeholder="Category" required />
+            <input class="border rounded p-2" name="lost_location" placeholder="Lost location" required />
+            <textarea class="border rounded p-2" name="description" placeholder="Description"></textarea>
+            <button class="px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Submit Lost</button>
+          </form>
+        </div>
 
-    <h2>Report Found Item</h2>
-    <form id="foundForm">
-      <input name="item_name" placeholder="Item name" required />
-      <input name="category" placeholder="Category" required />
-      <input name="found_location" placeholder="Found location" required />
-      <textarea name="description" placeholder="Description"></textarea>
-      <button>Submit Found</button>
-    </form>
+        <div class="card">
+          <h2 class="text-lg font-semibold mb-2">Report Found Item</h2>
+          <form id="foundForm" class="grid gap-2">
+            <input class="border rounded p-2" name="item_name" placeholder="Item name" required />
+            <input class="border rounded p-2" name="category" placeholder="Category" required />
+            <input class="border rounded p-2" name="found_location" placeholder="Found location" required />
+            <textarea class="border rounded p-2" name="description" placeholder="Description"></textarea>
+            <button class="px-3 py-2 bg-emerald-600 text-white rounded hover:bg-emerald-700">Submit Found</button>
+          </form>
+        </div>
 
-    <h2>Matches</h2>
-    <button id="runMatch">Run AutoMatch</button>
-    <div id="matches"></div>
+        <div class="card md:col-span-1 md:row-span-2">
+          <h2 class="text-lg font-semibold mb-2">Matches</h2>
+          <div id="matches"></div>
+        </div>
+      </div>
+    </div>
 
     <script>
-      const api = (p) => fetch(p).then(r => r.json());
-      const post = (p, body) => fetch(p, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }).then(r => r.json());
+      const notify = (msg, ok=true) => {
+        const el = document.createElement('div');
+        el.className = `fixed top-4 right-4 px-4 py-2 rounded shadow text-white ${ok? 'bg-emerald-600':'bg-rose-600'}`;
+        el.textContent = msg; document.body.appendChild(el); setTimeout(()=>el.remove(), 2000);
+      };
+      const api = (p) => fetch(p).then(async r => { if(!r.ok) throw new Error(await r.text()); return r.json(); });
+      const post = (p, body) => fetch(p, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }).then(async r => { if(!r.ok) throw new Error(await r.text()); return r.json(); });
 
       async function refresh() {
         const [lost, found, matches] = await Promise.all([
           api('/api/lost'), api('/api/found'), api('/api/matches')
         ]);
-        document.getElementById('matches').innerHTML = `<table><thead><tr><th>Match</th><th>Lost ID</th><th>Found ID</th><th>Date</th><th>Status</th></tr></thead><tbody>${
-          matches.map(m => `<tr><td>${m[0]}</td><td>${m[1]}</td><td>${m[2]}</td><td>${m[3]}</td><td>${m[4]}</td></tr>`).join('')
+        const rows = matches.map(m => Array.isArray(m) ? {match_id:m[0],lost_id:m[1],found_id:m[2],match_date:m[3],status:m[4]} : m);
+        document.getElementById('matches').innerHTML = `<table class="w-full text-sm"><thead><tr class="text-left"><th class="p-2">Match</th><th class="p-2">Lost ID</th><th class="p-2">Found ID</th><th class="p-2">Date</th><th class="p-2">Status</th></tr></thead><tbody>${
+          rows.map(m => `<tr class="odd:bg-gray-50"><td class="p-2">${m.match_id}</td><td class="p-2">${m.lost_id}</td><td class="p-2">${m.found_id}</td><td class="p-2">${m.match_date ?? ''}</td><td class="p-2">${m.status ?? ''}</td></tr>`).join('')
         }</tbody></table>`;
       }
 
       document.getElementById('lostForm').addEventListener('submit', async (e) => {
         e.preventDefault();
         const data = Object.fromEntries(new FormData(e.target).entries());
-        await post('/api/lost', data);
-        e.target.reset();
-        refresh();
+        try { await post('/api/lost', data); notify('Lost item submitted'); e.target.reset(); refresh(); } catch(err){ notify(err.message,false); }
       });
 
       document.getElementById('foundForm').addEventListener('submit', async (e) => {
         e.preventDefault();
         const data = Object.fromEntries(new FormData(e.target).entries());
-        await post('/api/found', data);
-        e.target.reset();
-        refresh();
+        try { await post('/api/found', data); notify('Found item submitted'); e.target.reset(); refresh(); } catch(err){ notify(err.message,false); }
       });
 
       document.getElementById('runMatch').addEventListener('click', async () => {
-        await post('/api/automatch', {});
-        refresh();
+        try { await post('/api/automatch', {}); notify('AutoMatch ran'); refresh(); } catch(err){ notify(err.message,false); }
+      });
+
+      document.getElementById('resetDb').addEventListener('click', async () => {
+        if (!confirm('Reset all data?')) return;
+        try { await post('/api/admin/reset', {}); notify('Database reset'); refresh(); } catch(err){ notify(err.message,false); }
       });
 
       refresh();
