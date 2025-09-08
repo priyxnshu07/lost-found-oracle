@@ -6,25 +6,33 @@
     <title>Lost & Found</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-      .card{ @apply bg-white/90 backdrop-blur rounded-2xl shadow-md p-5 border border-gray-100 transition-all duration-200 hover:shadow-xl hover:-translate-y-0.5 }
-      .btn{ @apply inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold shadow-sm transition active:scale-95 focus:outline-none focus:ring-2 focus:ring-offset-2 }
+      .card{ @apply bg-white/90 backdrop-blur rounded-2xl shadow-md p-5 border border-gray-100 transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 hover:border-indigo-200 }
+      .btn{ @apply relative overflow-hidden inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold shadow-sm transition active:scale-95 focus:outline-none focus:ring-2 focus:ring-offset-2 }
       .btn-primary{ @apply bg-indigo-600 text-white hover:bg-indigo-700 focus:ring-indigo-500 }
       .btn-success{ @apply bg-emerald-600 text-white hover:bg-emerald-700 focus:ring-emerald-500 }
       .btn-danger{ @apply bg-rose-600 text-white hover:bg-rose-700 focus:ring-rose-500 }
-      .input{ @apply border border-gray-300 rounded-xl p-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition bg-white/80 }
+      .btn::after{ content: ""; @apply absolute inset-0; background: radial-gradient(120px 120px at var(--x) var(--y), rgba(255,255,255,.35), transparent 60%); opacity:.0; transition:opacity .25s ease; }
+      .btn:hover::after{ opacity:.6 }
+      .input{ @apply border border-gray-300 rounded-xl p-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition bg-white/80 hover:border-indigo-300 }
       .label{ @apply text-xs font-medium text-gray-600 }
       .chip{ @apply inline-block text-[11px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 }
+      .shine{ position:relative; overflow:hidden }
+      .shine::before{ content:""; position:absolute; inset:-150% -150% auto auto; width:50%; height:300%; transform:rotate(25deg); background:linear-gradient(90deg,transparent,rgba(255,255,255,.4),transparent); animation: shine 6s linear infinite }
+      @keyframes shine{ 0%{ transform:translateX(-100%) rotate(25deg) } 100%{ transform:translateX(300%) rotate(25deg) } }
+      @keyframes fadeUp{ from{ opacity:0; transform: translateY(8px) } to{ opacity:1; transform: translateY(0) } }
+      .fade-up{ animation: fadeUp .6s ease both }
+      .spin{ animation: spin 1s linear infinite }
     </style>
   </head>
   <body class="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-emerald-50">
     <nav class="sticky top-0 z-10 backdrop-blur bg-white/70 border-b border-gray-100">
       <div class="max-w-6xl mx-auto px-6 py-3 flex items-center justify-between">
         <div class="flex items-center gap-2">
-          <div class="h-8 w-8 rounded-lg bg-indigo-600 text-white grid place-items-center font-semibold">LF</div>
+          <div class="h-8 w-8 rounded-lg bg-gradient-to-br from-indigo-600 to-emerald-500 text-white grid place-items-center font-semibold">LF</div>
           <span class="font-semibold">Lost & Found</span>
         </div>
         <div class="flex gap-2">
-          <button id="runMatch" class="btn btn-primary">Run AutoMatch</button>
+          <button id="runMatch" class="btn btn-primary shine">Run AutoMatch</button>
           <button id="resetDb" class="btn btn-danger">Reset DB</button>
         </div>
       </div>
@@ -37,7 +45,7 @@
       </header>
 
       <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div class="card">
+        <div class="card fade-up">
           <div class="flex items-center justify-between mb-2">
             <h2 class="text-lg font-semibold">Report Lost Item</h2>
             <span class="chip">Lost</span>
@@ -59,11 +67,11 @@
               <span class="label">Description</span>
               <textarea class="input" name="description" placeholder="color, case, stickers..."></textarea>
             </label>
-            <button class="btn btn-success">Submit Lost</button>
+            <button class="btn btn-success shine">Submit Lost</button>
           </form>
         </div>
 
-        <div class="card">
+        <div class="card fade-up" style="animation-delay:.08s">
           <div class="flex items-center justify-between mb-2">
             <h2 class="text-lg font-semibold">Report Found Item</h2>
             <span class="chip">Found</span>
@@ -85,11 +93,11 @@
               <span class="label">Description</span>
               <textarea class="input" name="description" placeholder="where exactly, notes..."></textarea>
             </label>
-            <button class="btn btn-primary">Submit Found</button>
+            <button class="btn btn-primary shine">Submit Found</button>
           </form>
         </div>
 
-        <div class="card md:col-span-1 md:row-span-2">
+        <div class="card md:col-span-1 md:row-span-2 fade-up" style="animation-delay:.16s">
           <h2 class="text-lg font-semibold mb-2">Matches</h2>
           <div id="matches"></div>
         </div>
@@ -97,10 +105,34 @@
     </div>
 
     <script>
+      // Button cursor glow effect
+      document.addEventListener('mousemove', (e) => {
+        for (const b of document.querySelectorAll('.btn')) {
+          const r = b.getBoundingClientRect();
+          b.style.setProperty('--x', `${e.clientX - r.left}px`);
+          b.style.setProperty('--y', `${e.clientY - r.top}px`);
+        }
+      });
+
       const notify = (msg, ok=true) => {
         const el = document.createElement('div');
-        el.className = `fixed top-4 right-4 px-4 py-2 rounded shadow text-white ${ok? 'bg-emerald-600':'bg-rose-600'}`;
+        el.className = `fixed top-4 right-4 px-4 py-2 rounded-xl shadow-lg text-white ${ok? 'bg-emerald-600':'bg-rose-600'}`;
         el.textContent = msg; document.body.appendChild(el); setTimeout(()=>el.remove(), 2000);
+      };
+
+      const setLoading = (loading) => {
+        let spinner = document.getElementById('globalSpinner');
+        if (loading) {
+          if (!spinner) {
+            spinner = document.createElement('div');
+            spinner.id = 'globalSpinner';
+            spinner.className = 'fixed z-50 bottom-6 right-6 h-10 w-10 grid place-items-center rounded-full bg-indigo-600 text-white shadow-lg';
+            spinner.innerHTML = '<svg class="spin h-5 w-5" viewBox="0 0 24 24" fill="none"><circle class="opacity-30" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path d="M22 12a10 10 0 0 1-10 10" stroke="currentColor" stroke-width="4"/></svg>';
+            document.body.appendChild(spinner);
+          }
+        } else {
+          spinner && spinner.remove();
+        }
       };
       const api = (p) => fetch(p).then(async r => { if(!r.ok) throw new Error(await r.text()); return r.json(); });
       const post = (p, body) => fetch(p, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }).then(async r => { if(!r.ok) throw new Error(await r.text()); return r.json(); });
@@ -111,29 +143,29 @@
         ]);
         const rows = matches.map(m => Array.isArray(m) ? {match_id:m[0],lost_id:m[1],found_id:m[2],match_date:m[3],status:m[4]} : m);
         document.getElementById('matches').innerHTML = `<table class="w-full text-sm overflow-hidden rounded-xl border border-gray-100"><thead><tr class="text-left bg-gray-50"><th class="p-2 text-gray-600">Match</th><th class="p-2 text-gray-600">Lost ID</th><th class="p-2 text-gray-600">Found ID</th><th class="p-2 text-gray-600">Date</th><th class="p-2 text-gray-600">Status</th></tr></thead><tbody>${
-          rows.map(m => `<tr class="odd:bg-white even:bg-gray-50 hover:bg-indigo-50/60 transition"><td class="p-2">${m.match_id}</td><td class="p-2">${m.lost_id}</td><td class="p-2">${m.found_id}</td><td class="p-2">${m.match_date ?? ''}</td><td class="p-2">${m.status ?? ''}</td></tr>`).join('')
+          rows.map(m => `<tr class="odd:bg-white even:bg-gray-50 hover:bg-indigo-50/60 transition-colors"><td class="p-2">${m.match_id}</td><td class="p-2">${m.lost_id}</td><td class="p-2">${m.found_id}</td><td class="p-2">${m.match_date ?? ''}</td><td class="p-2">${m.status ?? ''}</td></tr>`).join('')
         }</tbody></table>`;
       }
 
       document.getElementById('lostForm').addEventListener('submit', async (e) => {
         e.preventDefault();
         const data = Object.fromEntries(new FormData(e.target).entries());
-        try { await post('/api/lost', data); notify('Lost item submitted'); e.target.reset(); refresh(); } catch(err){ notify(err.message,false); }
+        try { setLoading(true); await post('/api/lost', data); notify('Lost item submitted'); e.target.reset(); refresh(); } catch(err){ notify(err.message,false); } finally { setLoading(false) }
       });
 
       document.getElementById('foundForm').addEventListener('submit', async (e) => {
         e.preventDefault();
         const data = Object.fromEntries(new FormData(e.target).entries());
-        try { await post('/api/found', data); notify('Found item submitted'); e.target.reset(); refresh(); } catch(err){ notify(err.message,false); }
+        try { setLoading(true); await post('/api/found', data); notify('Found item submitted'); e.target.reset(); refresh(); } catch(err){ notify(err.message,false); } finally { setLoading(false) }
       });
 
       document.getElementById('runMatch').addEventListener('click', async () => {
-        try { await post('/api/automatch', {}); notify('AutoMatch ran'); refresh(); } catch(err){ notify(err.message,false); }
+        try { setLoading(true); await post('/api/automatch', {}); notify('AutoMatch ran'); refresh(); } catch(err){ notify(err.message,false); } finally { setLoading(false) }
       });
 
       document.getElementById('resetDb').addEventListener('click', async () => {
         if (!confirm('Reset all data?')) return;
-        try { await post('/api/admin/reset', {}); notify('Database reset'); refresh(); } catch(err){ notify(err.message,false); }
+        try { setLoading(true); await post('/api/admin/reset', {}); notify('Database reset'); refresh(); } catch(err){ notify(err.message,false); } finally { setLoading(false) }
       });
 
       refresh();
