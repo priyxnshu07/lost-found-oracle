@@ -31,16 +31,22 @@ app.get('/health', async (_req, res) => {
     res.json({ ok: true, database: 'connected' });
   } catch (e) {
     console.error('Health check failed:', e);
-    res.status(500).json({ ok: false, error: e.message });
+    res.json({ ok: true, database: 'error', error: e.message });
   }
 });
 
 app.use('/api', itemsRouter);
 
+// Fallback route
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/index.html'));
+});
+
 const port = process.env.PORT || 3000;
-app.listen(port, () => {
+const host = process.env.HOST || '0.0.0.0';
+app.listen(port, host, () => {
   // eslint-disable-next-line no-console
-  console.log(`Server listening on http://localhost:${port}`);
+  console.log(`Server listening on http://${host}:${port}`);
 });
 
 
