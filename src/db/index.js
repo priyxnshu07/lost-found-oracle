@@ -1,15 +1,11 @@
 import dotenv from 'dotenv';
+import { withConnection as sqliteWithConnection } from './sqlite.js';
+import { withConnection as oracleWithConnection } from './oracle.js';
+
 dotenv.config();
 
 const driver = (process.env.DB_DRIVER || 'oracle').toLowerCase();
 
-let impl;
-if (driver === 'sqlite') {
-  impl = await import('./sqlite.js');
-} else {
-  impl = await import('./oracle.js');
-}
-
-export const db = impl;
-
-
+export const db = {
+  withConnection: driver === 'sqlite' ? sqliteWithConnection : oracleWithConnection
+};

@@ -15,6 +15,7 @@ router.get('/lost', async (_req, res) => {
     });
     res.json(result.rows || result);
   } catch (e) {
+    console.error('Error in /lost GET:', e);
     res.status(500).json({ error: e.message });
   }
 });
