@@ -37,6 +37,11 @@ async function refresh() {
     const cls = t === 'Confirmed' ? 'bg-emerald-100 text-emerald-700' : t === 'Rejected' ? 'bg-rose-100 text-rose-700' : 'bg-amber-100 text-amber-700';
     return `<span class="px-2 py-1 rounded-full text-[11px] font-semibold ${cls}">${t}</span>`;
   };
+  const actionBtns = (id) => `
+    <div class="flex gap-2 justify-end">
+      <button data-action="confirm" data-id="${id}" class="px-2 py-1 rounded-md bg-emerald-600 text-white text-xs hover:bg-emerald-700">Confirm</button>
+      <button data-action="reject" data-id="${id}" class="px-2 py-1 rounded-md bg-rose-600 text-white text-xs hover:bg-rose-700">Reject</button>
+    </div>`;
   const tableBody = rows.length ? rows.map(m => `<tr class="odd:bg-white even:bg-gray-50 hover:bg-indigo-50/60 transition-colors">
       <td class="p-2">#${m.match_id ?? ''}</td>
       <td class="p-2">
@@ -48,10 +53,20 @@ async function refresh() {
         <div class="text-xs text-gray-500">${m.found_category ?? ''} • ${m.found_location ?? ''}</div>
       </td>
       <td class="p-2 whitespace-nowrap">${m.match_date ?? ''}</td>
-      <td class="p-2 text-center">${statusBadge(m.status)}</td>
+      <td class="p-2 text-center">${statusBadge(m.status)}${m.match_id? actionBtns(m.match_id):''}</td>
     </tr>`).join('') : `<tr><td colspan="5" class="p-4 text-center text-gray-500">No matches yet. Add items and click <b>Run AutoMatch</b>.</td></tr>`;
   document.getElementById('matches').innerHTML = `<table class="w-full text-sm overflow-hidden rounded-xl border border-gray-100"><thead><tr class="text-left bg-gray-50"><th class="p-2 text-gray-600">Match</th><th class="p-2 text-gray-600">Lost</th><th class="p-2 text-gray-600">Found</th><th class="p-2 text-gray-600">Date</th><th class="p-2 text-gray-600 text-center">Status</th></tr></thead><tbody>${tableBody}</tbody></table>`;
 }
+
+document.addEventListener('click', async (e) => {
+  const el = e.target;
+  if (el.matches('[data-action]')) {
+    const id = el.getAttribute('data-id');
+    const action = el.getAttribute('data-action');
+    const status = action === 'confirm' ? 'Confirmed' : 'Rejected';
+    try { setLoading(true); await post(`/api/matches/${id}/status`, { status }); notify(`Marked ${status}`); refresh(); } catch(err){ notify(err.message,false) } finally { setLoading(false) }
+  }
+});
 
 document.getElementById('lostForm').addEventListener('submit', async (e) => {
   e.preventDefault();

@@ -201,6 +201,28 @@ router.post('/admin/reset', async (_req, res) => {
   }
 });
 
+// Update match status (Confirm/Reject/Pending)
+router.post('/matches/:id/status', async (req, res) => {
+  const id = Number(req.params.id);
+  const { status } = req.body || {};
+  if (!id || !status) return res.status(400).json({ error: 'id and status required' });
+  try {
+    const result = await db.withConnection(async conn => {
+      if (conn.execute) {
+        await conn.execute(`UPDATE MATCHES SET status = :status WHERE match_id = :id`, { status, id });
+        await conn.commit();
+        return { ok: true };
+      } else {
+        conn.prepare(`UPDATE MATCHES SET status = ? WHERE match_id = ?`).run(status, id);
+        return { ok: true };
+      }
+    });
+    res.json(result);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 export default router;
 
 
