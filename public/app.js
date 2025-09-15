@@ -32,21 +32,25 @@ async function refresh() {
     lost_name:m[5],lost_category:m[6],lost_location:m[7],
     found_name:m[8],found_category:m[9],found_location:m[10]
   } : m);
-  document.getElementById('matches').innerHTML = `<table class="w-full text-sm overflow-hidden rounded-xl border border-gray-100"><thead><tr class="text-left bg-gray-50"><th class="p-2 text-gray-600">Match</th><th class="p-2 text-gray-600">Lost</th><th class="p-2 text-gray-600">Found</th><th class="p-2 text-gray-600">Date</th><th class="p-2 text-gray-600">Status</th></tr></thead><tbody>${
-    rows.map(m => `<tr class="odd:bg-white even:bg-gray-50 hover:bg-indigo-50/60 transition-colors">
-      <td class="p-2">#${m.match_id}</td>
+  const statusBadge = (s) => {
+    const t = (s || 'Pending').toString();
+    const cls = t === 'Confirmed' ? 'bg-emerald-100 text-emerald-700' : t === 'Rejected' ? 'bg-rose-100 text-rose-700' : 'bg-amber-100 text-amber-700';
+    return `<span class="px-2 py-1 rounded-full text-[11px] font-semibold ${cls}">${t}</span>`;
+  };
+  const tableBody = rows.length ? rows.map(m => `<tr class="odd:bg-white even:bg-gray-50 hover:bg-indigo-50/60 transition-colors">
+      <td class="p-2">#${m.match_id ?? ''}</td>
       <td class="p-2">
-        <div class="text-gray-900 font-medium">${m.lost_name ?? ''} <span class="text-xs text-gray-500">(ID ${m.lost_id})</span></div>
+        <div class="text-gray-900 font-medium">${m.lost_name ?? ''} <span class="text-xs text-gray-500">${m.lost_id?`(ID ${m.lost_id})`:''}</span></div>
         <div class="text-xs text-gray-500">${m.lost_category ?? ''} • ${m.lost_location ?? ''}</div>
       </td>
       <td class="p-2">
-        <div class="text-gray-900 font-medium">${m.found_name ?? ''} <span class="text-xs text-gray-500">(ID ${m.found_id})</span></div>
+        <div class="text-gray-900 font-medium">${m.found_name ?? ''} <span class="text-xs text-gray-500">${m.found_id?`(ID ${m.found_id})`:''}</span></div>
         <div class="text-xs text-gray-500">${m.found_category ?? ''} • ${m.found_location ?? ''}</div>
       </td>
-      <td class="p-2">${m.match_date ?? ''}</td>
-      <td class="p-2">${m.status ?? ''}</td>
-    </tr>`).join('')
-  }</tbody></table>`;
+      <td class="p-2 whitespace-nowrap">${m.match_date ?? ''}</td>
+      <td class="p-2 text-center">${statusBadge(m.status)}</td>
+    </tr>`).join('') : `<tr><td colspan="5" class="p-4 text-center text-gray-500">No matches yet. Add items and click <b>Run AutoMatch</b>.</td></tr>`;
+  document.getElementById('matches').innerHTML = `<table class="w-full text-sm overflow-hidden rounded-xl border border-gray-100"><thead><tr class="text-left bg-gray-50"><th class="p-2 text-gray-600">Match</th><th class="p-2 text-gray-600">Lost</th><th class="p-2 text-gray-600">Found</th><th class="p-2 text-gray-600">Date</th><th class="p-2 text-gray-600 text-center">Status</th></tr></thead><tbody>${tableBody}</tbody></table>`;
 }
 
 document.getElementById('lostForm').addEventListener('submit', async (e) => {
