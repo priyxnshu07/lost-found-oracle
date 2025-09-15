@@ -126,7 +126,8 @@ function endTour() {
   tourPauseUI(false);
 }
 
-document.getElementById("showTour").onclick = () => startTour();
+const helpBtn = document.getElementById("helpBtn");
+if (helpBtn) helpBtn.onclick = () => startTour();
 
 if (!localStorage.getItem("lf_seen_tour")) {
   setTimeout(() => { startTour(); localStorage.setItem("lf_seen_tour", "1"); }, 700);
