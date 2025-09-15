@@ -85,10 +85,27 @@ router.post('/found', async (req, res) => {
 router.get('/matches', async (_req, res) => {
   try {
     const result = await db.withConnection(conn => {
+      const sql = `
+        SELECT 
+          m.match_id,
+          m.lost_id,
+          m.found_id,
+          m.match_date,
+          m.status,
+          li.item_name AS lost_name,
+          li.category AS lost_category,
+          li.lost_location AS lost_location,
+          fi.item_name AS found_name,
+          fi.category AS found_category,
+          fi.found_location AS found_location
+        FROM MATCHES m
+        LEFT JOIN LOST_ITEMS li ON li.lost_id = m.lost_id
+        LEFT JOIN FOUND_ITEMS fi ON fi.found_id = m.found_id
+        ORDER BY m.match_id DESC`;
       if (conn.execute) {
-        return conn.execute(`SELECT match_id, lost_id, found_id, match_date, status FROM MATCHES ORDER BY match_id DESC`);
+        return conn.execute(sql);
       } else {
-        const rows = conn.prepare(`SELECT match_id, lost_id, found_id, match_date, status FROM MATCHES ORDER BY match_id DESC`).all();
+        const rows = conn.prepare(sql).all();
         return { rows };
       }
     });
@@ -104,7 +121,24 @@ router.post('/automatch', async (_req, res) => {
       if (conn.execute) {
         await conn.execute(`BEGIN AutoMatchItems; END;`);
         await conn.commit();
-        const matches = await conn.execute(`SELECT match_id, lost_id, found_id, match_date, status FROM MATCHES ORDER BY match_id DESC`);
+        const sql = `
+          SELECT 
+            m.match_id,
+            m.lost_id,
+            m.found_id,
+            m.match_date,
+            m.status,
+            li.item_name AS lost_name,
+            li.category AS lost_category,
+            li.lost_location AS lost_location,
+            fi.item_name AS found_name,
+            fi.category AS found_category,
+            fi.found_location AS found_location
+          FROM MATCHES m
+          LEFT JOIN LOST_ITEMS li ON li.lost_id = m.lost_id
+          LEFT JOIN FOUND_ITEMS fi ON fi.found_id = m.found_id
+          ORDER BY m.match_id DESC`;
+        const matches = await conn.execute(sql);
         return matches.rows;
       } else {
         // simple automatch for sqlite
@@ -117,7 +151,24 @@ router.post('/automatch', async (_req, res) => {
             conn.prepare(`UPDATE FOUND_ITEMS SET status = 'Matched' WHERE found_id = ?`).run(found.found_id);
           }
         }
-        const rows = conn.prepare(`SELECT match_id, lost_id, found_id, match_date, status FROM MATCHES ORDER BY match_id DESC`).all();
+        const sql = `
+          SELECT 
+            m.match_id,
+            m.lost_id,
+            m.found_id,
+            m.match_date,
+            m.status,
+            li.item_name AS lost_name,
+            li.category AS lost_category,
+            li.lost_location AS lost_location,
+            fi.item_name AS found_name,
+            fi.category AS found_category,
+            fi.found_location AS found_location
+          FROM MATCHES m
+          LEFT JOIN LOST_ITEMS li ON li.lost_id = m.lost_id
+          LEFT JOIN FOUND_ITEMS fi ON fi.found_id = m.found_id
+          ORDER BY m.match_id DESC`;
+        const rows = conn.prepare(sql).all();
         return rows;
       }
     });
