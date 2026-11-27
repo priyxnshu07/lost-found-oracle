@@ -22,3 +22,8 @@ Endpoints:
 - GET /api/matches
 - POST /api/automatch
 
+
+
+## Match score
+
+Run: node scripts/try-score.js
