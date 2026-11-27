@@ -6,8 +6,10 @@ export function matchScore(lost, found) {
   const category = clean(lost.category) === clean(found.category) ? 1 : 0;
 
   const place = clean(lost.lost_location) === clean(found.found_location) ? 1 : 0;
+  const words = clean(lost.description).split(/\W+/).filter((w) => w.length > 3);
+  const hit = words.some((w) => clean(found.description).includes(w)) ? 1 : 0;
 
-  return name * 50 + category * 20 + place * 30;
+  return name * 40 + category * 20 + place * 25 + hit * 15;
 }
 
 export function matchLabel(score) {
