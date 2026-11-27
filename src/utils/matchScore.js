@@ -5,7 +5,9 @@ export function matchScore(lost, found) {
   const name = clean(lost.item_name) === clean(found.item_name) ? 1 : 0;
   const category = clean(lost.category) === clean(found.category) ? 1 : 0;
 
-  return name * 60 + category * 40;
+  const place = clean(lost.lost_location) === clean(found.found_location) ? 1 : 0;
+
+  return name * 50 + category * 20 + place * 30;
 }
 
 export function matchLabel(score) {
